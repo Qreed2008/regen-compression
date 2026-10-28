@@ -31,7 +31,7 @@ class WeirdTreeThing:
     self.branch[self.current_loc] = 0
     self.current_loc -= 1
 
-  def next_byte(self):
+  def get_next_byte_option(self):
     temp = self.current_state[self.branch[self.current_loc]]
     temp = temp[temp.index(self.backwards_record[self.current_loc])+1:]
 
