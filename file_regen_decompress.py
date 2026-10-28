@@ -21,7 +21,15 @@ class WeirdTreeThing:
         complete = True
 
   def step(self):
-    pass
+    temp = self.get_next_byte_option()
+    if len(temp) == None:
+      self.backwards()
+    else:
+      self.branch[self.current_loc] = temp[0]
+      self.backwards_record[self.current_loc] = temp[0]
+      self.current_state[self.current_loc] -= 1
+      self.current_state[self.branch[self.current_loc-1]][self.branch[self.current_loc]] -= 1
+      self.current_loc += 1
 
   def backwards(self):
     if "f" in self.settings and self.settings["f"] == True:
@@ -32,8 +40,10 @@ class WeirdTreeThing:
     self.current_loc -= 1
 
   def get_next_byte_option(self):
-    temp = self.current_state[self.branch[self.current_loc]]
+    temp = [x for x in self.current_state[self.branch[self.current_loc]].keys()]
     temp = temp[temp.index(self.backwards_record[self.current_loc])+1:]
+    if self.current_state[self.branch[self.current_loc-1]][temp[0]] != self.settings["byte_details"][self.branch[self.current_loc-1]][temp[0]]:
+      return temp[0]
 
 # 54:1,(65:1)/65:4,(73:1,6E:2)/73:2,(74:1,65:1)/74:2,(20:1,65:1)/20:1,(73:1)/6E:2,(74:1,63:1)/63:1,(65:1)
 
@@ -60,7 +70,8 @@ thing = {
   }
 }
 
-WeirdTreeThing({"length": 13, "f": True, "byte_details": thing})
+ab = WeirdTreeThing({"length": 13, "f": True, "byte_details": thing})
+print(ab.branch)
 
 """
 elif mode == "e":
