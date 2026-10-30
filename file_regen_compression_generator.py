@@ -90,38 +90,12 @@ def char_list_gen(data, mode = "normal"):
         if jtem != "main":
           finalstr += hex(jtem)[2:].zfill(2).upper() + ":" + base64_custom(results[item][jtem]) + ","
 
-      finalstr = finalstr[:-1] + ")/"
+      if item == [x for x in results.keys()][-1] and len(results[item]) == 1:
+        finalstr = finalstr[:-1]
+      else:
+        finalstr = finalstr[:-1] + ")/"
 
   return finalstr[:-1]
-
-
-
-def char_list_decode(string):
-  parts = string.split("/")
-  result = {}
-  for i in range(len(parts)):
-    if "(" in parts[i]:
-      parts[i] = parts[i].split(",")
-
-      result[parts[i][0].split(":")[0]] = {}
-      result[parts[i][0].split(":")[0]]["main"] = base64_decode(parts[i][0].split(":")[1])
-
-      for j in range(1, len(parts[i])):
-        if parts[i][j][0] == "(" and parts[i][j][-1] == ")":
-          part_num = parts[i][j][1:-1].split(":")
-        elif parts[i][j][-1] == ")":
-          part_num = parts[i][j][:-1].split(":")
-        elif parts[i][j][0] == "(":
-          part_num = parts[i][j][1:].split(":")
-        else:
-          part_num = parts[i][j].split(":")
-
-        result[parts[i][0].split(":")[0]][part_num[0]] = base64_decode(part_num[1])
-
-    else:
-      result[parts[i].split(":")[0]] = base64_decode(parts[i].split(":")[1])
-
-  return result
 
 
 
