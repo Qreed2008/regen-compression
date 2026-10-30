@@ -147,10 +147,10 @@ Other settings can be added here
 f - Include "follow-up bytes" details (ex. if given 00 01, it
   will also be noted that one 01 appears after 00)
 ch - Hashes for chunks (more questions will appear afterwards)
-cb - Include byte details per chunk (will follow chunk hashes'
-    chunk size setting if you did that) (cbf to include
-    "follow-up"s, like seen above)
 """)
+# cb - Include byte details per chunk (will follow chunk hashes'
+#     chunk size setting if you did that) (cbf to include
+#     "follow-up"s, like seen above)
   while current != "next":
     current = input("Other settings? - ")
 
@@ -172,7 +172,7 @@ cb - Include byte details per chunk (will follow chunk hashes'
       for item in supported_hashes:
         if item[0] in ch_temp:
           hash_check = True
-          settings["ch"].append(item)
+          settings["ch"].append(item[0])
 
       if hash_check == False:
         raise Exception("Can't have zero hashes")
@@ -203,6 +203,12 @@ cb - Include byte details per chunk (will follow chunk hashes'
 
     if "ch" in settings:
       openTwo.write("-" + base64_custom(hash_mode_num(settings["ch"])) + "/")
+
+      for i in range(len(supported_hashes)):
+        if supported_hashes[-i][0] in settings["ch"]:
+          del settings["ch"][settings["ch"].index(supported_hashes[-i][0])]
+          settings["ch"].append(supported_hashes[-i])
+
       for i in range(0, len(content), settings["c_size"]):
         for j in settings["ch"]:
           if j == settings["ch"][-1] and len(content) - i < settings["c_size"]:
