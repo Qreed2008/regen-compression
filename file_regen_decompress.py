@@ -32,7 +32,6 @@ class WeirdTreeThing:
 
   def step(self):
     temp = self.get_next_byte_option()
-    t2 = self.current_loc % self.settings["chunk-hash-size"] == self.settings["chunk-hash-size"] - 1
     if temp == None or self.current_loc >= self.settings["length"] or ("ch" in settings and self.current_loc % self.settings["chunk-hash-size"] == self.settings["chunk-hash-size"] - 1 and not self.section_hash_check()):
       #with open("temp.ug", "wb") as openFile:
         #openFile.write(self.branch)
@@ -193,14 +192,14 @@ while i < len(content) and settings_mode != "end":
 
     i += 1
   elif settings_mode == "mode":
-    settings[settings_mode] = bin(base64_decode(settings[settings_mode]))[2:]
+    settings[settings_mode] = bin(base64_decode(settings[settings_mode]))[2:].zfill(4)
     if settings[settings_mode][-1] == "1":
       settings["f"] = True
     if settings[settings_mode][-2] == "1":
       settings["ch"] = {}
     if settings[settings_mode][-4:-2] == "11":
       settings["cbf"] = []
-    elif len(settings[settings_mode]) > 3 and settings[settings_mode][-3] == "1":
+    elif settings[settings_mode][-3] == "1":
       settings["cb"] = []
     
     if "1" in settings[settings_mode][-4:-1]:
