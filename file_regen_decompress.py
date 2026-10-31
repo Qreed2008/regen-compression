@@ -62,11 +62,6 @@ class WeirdTreeThing:
   def get_next_byte_option(self):
     temp = [x for x in self.current_state[self.branch[self.current_loc-1]].keys()][1:]
 
-    if self.going_back:
-      temp = temp[temp.index(self.backwards_record[self.current_loc])+1:]
-
-    temp = [x for x in temp if self.current_state[self.branch[self.current_loc-1]][x] != 0]
-
     unused = 0
     i = 0
     while unused < 1 and i < len(temp):
@@ -76,6 +71,15 @@ class WeirdTreeThing:
       i += 1
 
     temp = temp[:i]
+
+    if self.going_back:
+      try:
+        temp = temp[temp.index(self.backwards_record[self.current_loc])+1:]
+      except:
+        temp = []
+
+    temp = [x for x in temp if self.current_state[self.branch[self.current_loc-1]][x] != 0]
+
     return temp[0] if len(temp) > 0 else None
 
   def hash_check(self):
