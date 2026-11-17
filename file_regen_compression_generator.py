@@ -147,6 +147,8 @@ Other settings can be added here
 f - Include "follow-up bytes" details (ex. if given 00 01, it
   will also be noted that one 01 appears after 00)
 ch - Hashes for chunks (more questions will appear afterwards)
+c1b - Include the first byte of every x bytes (will help a lot)
+    Does use a separate size from chunk hashes
 """)
 # cb - Include byte details per chunk (will follow chunk hashes'
 #     chunk size setting if you did that) (cbf to include
@@ -167,6 +169,7 @@ ch - Hashes for chunks (more questions will appear afterwards)
         current = input("Use which hashes? (SHA1, SHA256, MD5) - ")
         ch_temp.append(current)
 
+      current = ""
       del ch_temp[-1]
       hash_check = False
       for item in supported_hashes:
@@ -178,6 +181,11 @@ ch - Hashes for chunks (more questions will appear afterwards)
         raise Exception("Can't have zero hashes")
       else:
         print("this is the chunk hash portion")
+    elif current == "c1b":
+      settings["c1b"] = True
+
+      if "c1b_size" not in settings:
+        settings["c1b_size"] = int(input("\"c1b\" block size? "))
 
 
   with open(output, "w") as openTwo:
@@ -187,10 +195,12 @@ ch - Hashes for chunks (more questions will appear afterwards)
       mode_num += 1
     if "ch" in settings:
       mode_num += 2
-    if "cb" in settings:
-      mode_num += 4
-    if "cbf" in settings:
-      mode_num += 12
+    #if "cb" in settings:
+      #mode_num += 4
+    #if "cbf" in settings:
+      #mode_num += 12
+    if "c1b" in settings:
+      mode_num += 16
 
     openTwo.write(base64_custom(len(content)) + "-")
     openTwo.write(base64_custom(mode_num).zfill(2) + "-")
@@ -218,3 +228,9 @@ ch - Hashes for chunks (more questions will appear afterwards)
 
         if i % (100*settings["c_size"]) == 0:
           print("chunk hash:", i, len(content))
+
+    if "c1b" in settings:
+      openTwo.write("-" + base64_custom(settings["c1b_size"]) + "/")
+
+      for i in range(0, len(content), settings["c1b_size"]):
+        openTwo.write(hex(content[i])[2:].zfill(2).upper())
