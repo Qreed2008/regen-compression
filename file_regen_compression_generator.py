@@ -102,10 +102,18 @@ def char_list_gen(data, mode = "normal"):
 def hash_mode_num(list_of_hashes):
   mode_num_hash = 0
   for i in range(len(supported_hashes)):
-    if supported_hashes[-i][0] in list_of_hashes:
+    if supported_hashes[-i-1][0] in list_of_hashes:
       mode_num_hash += 2**i
 
   return mode_num_hash
+
+
+
+def start_point(lenc, c1b_size):
+  if lenc % c1b_size == 0:
+    return lenc - c1b_size
+  else:
+    return lenc - (lenc % c1b_size)
 
 
 
@@ -231,6 +239,14 @@ c1b - Include the first byte of every x bytes (will help a lot)
 
     if "c1b" in settings:
       openTwo.write("-" + base64_custom(settings["c1b_size"]) + "/")
+      temp = ""
+      temp2 = ""
 
-      for i in range(0, len(content), settings["c1b_size"]):
-        openTwo.write(hex(content[i])[2:].zfill(2).upper())
+      for i in range(start_point(len(content), settings["c1b_size"]), -1, -settings["c1b_size"]):
+        temp = bin(content[i])[2:].zfill(8) + temp
+
+        while len(temp) > 6:
+          temp2 = base64_custom(int(temp[-6:], 2)) + temp2
+          temp = temp[:-6]
+
+      openTwo.write(temp2)
