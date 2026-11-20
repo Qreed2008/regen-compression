@@ -49,11 +49,12 @@ class WeirdTreeThing:
       self.current_state[self.branch[self.current_loc-1]][self.branch[self.current_loc]] -= 1
       self.current_loc += 1
       if self.going_back == True:
-        if self.branch_num % 10000 == 0:
+        if self.branch_num % 1000 == 0:
           print(f"End of branch {self.branch_num} | {self.current_loc} | {round(time()-self.start_time, 2)} | {self.branch[(self.current_section()-self.settings['chunk-hash-size'] if 'chunk-hash-size' in self.settings and self.current_section() > 0 else 0):(self.current_section()+self.settings['chunk-hash-size'] if 'chunk-hash-size' in self.settings else self.current_loc)]}")
         self.branch_num += 1
 
       self.going_back = False
+    #print(f"End of branch {self.branch_num} | {self.current_loc} | {round(time()-self.start_time, 2)} | {self.branch[(self.current_section()-self.settings['chunk-hash-size'] if 'chunk-hash-size' in self.settings and self.current_section() > 0 else 0):(self.current_section()+self.settings['chunk-hash-size'] if 'chunk-hash-size' in self.settings else self.current_loc)]}")
 
   def backwards(self):
     self.backwards_loc = self.current_loc
@@ -92,15 +93,7 @@ class WeirdTreeThing:
     return temp[0] if len(temp) > 0 else None
 
   def hash_check(self):
-    for item in [["md5", hashlib.md5], ["sha1", hashlib.sha1], ["sha256", hashlib.sha256]]:
-      if f"file-hash-{item[0]}" in self.settings:
-        if item[1](self.branch).hexdigest() != self.settings[f"file-hash-{item[0]}"]:
-          return False
-
-    return True
-
-  def chunk_hash_check(self):
-    for item in [["md5", hashlib.md5], ["sha1", hashlib.sha1], ["sha256", hashlib.sha256]]:
+    for item in supported_hashes:
       if f"file-hash-{item[0]}" in self.settings:
         if item[1](self.branch).hexdigest() != self.settings[f"file-hash-{item[0]}"]:
           return False
@@ -125,7 +118,7 @@ class WeirdTreeThing:
 
 
 
-class PartialFile: # Load a file in pieces to not destroy the poor RPi this is for
+class PartialFile: # I left that comment there huh
   def __init__(self, file_name, segment_size):
     self.file_name = file_name
     self.segment_size = segment_size
@@ -215,7 +208,7 @@ while i < len(content) and settings_mode != "end":
     i += 1
   elif settings_mode == "mode":
     settings[settings_mode] = bin(base64_decode(settings[settings_mode]))[2:].zfill(4)
-    if len(settings[settings_mode]) >= 1 and settings[settings_mode][-1] == "1":
+    if settings[settings_mode][-1] == "1":
       settings["f"] = True
     if len(settings[settings_mode]) >= 2 and settings[settings_mode][-2] == "1":
       settings["ch"] = {}
@@ -234,27 +227,27 @@ while i < len(content) and settings_mode != "end":
     i += 1
   elif settings_mode == "file-hashes":
     settings[settings_mode] = bin(base64_decode(settings[settings_mode]))[2:]
-    if settings[settings_mode][-3] == "1":
+    if len(settings[settings_mode]) >= 3 and settings[settings_mode][-3] == "1":
       settings_mode = "file-hash-sha256"
-    elif settings[settings_mode][-2] == "1":
+    elif len(settings[settings_mode]) >= 2 and settings[settings_mode][-2] == "1":
       settings_mode = "file-hash-sha1"
     elif settings[settings_mode][-1] == "1":
       settings_mode = "file-hash-md5"
 
     i += 1
-  elif settings_mode == "file-hash-sha1":
+  elif settings_mode == "file-hash-sha256":
     settings[settings_mode] = hex(base64_decode(settings[settings_mode]))[2:].zfill(40)
-    if settings["file-hashes"][-1] == "1":
+    if len(settings[settings_mode]) >= 2 and settings["file-hashes"][-2] == "1":
+      settings_mode = "file-hash-sha1"
+    elif settings["file-hashes"][-1] == "1":
       settings_mode = "file-hash-md5"
     else:
       settings_mode = "byte-details"
 
     i += 1
-  elif settings_mode == "file-hash-sha256":
+  elif settings_mode == "file-hash-sha1":
     settings[settings_mode] = hex(base64_decode(settings[settings_mode]))[2:].zfill(64)
-    if settings["file-hashes"][-2] == "1":
-      settings_mode = "file-hash-sha1"
-    elif settings["file-hashes"][-1] == "1":
+    if settings["file-hashes"][-1] == "1":
       settings_mode = "file-hash-md5"
     else:
       settings_mode = "byte-details"
@@ -277,9 +270,9 @@ while i < len(content) and settings_mode != "end":
     i += 1
   elif settings_mode == "chunk-hashes":
     settings[settings_mode] = bin(base64_decode(settings[settings_mode]))[2:]
-    if settings[settings_mode][-3] == "1":
+    if len(settings[settings_mode]) >= 3 and settings[settings_mode][-3] == "1":
       settings_mode = "chunk-hash-sha256"
-    elif settings[settings_mode][-2] == "1":
+    elif len(settings[settings_mode]) >= 2 and settings[settings_mode][-2] == "1":
       settings_mode = "chunk-hash-sha1"
     elif settings[settings_mode][-1] == "1":
       settings_mode = "chunk-hash-md5"
@@ -292,6 +285,10 @@ while i < len(content) and settings_mode != "end":
 
     settings["ch"]["SHA1"].append(hex(base64_decode(settings[settings_mode]))[2:].zfill(40))
     settings[settings_mode] = ""
+
+    if content[i] == ord("-"):
+      settings_mode = "c1b-size"
+
     i += 1
 
   elif settings_mode == "chunk-hash-sha256":
@@ -312,6 +309,10 @@ while i < len(content) and settings_mode != "end":
 
     settings["ch"]["MD5"].append(hex(base64_decode(settings[settings_mode]))[2:].zfill(32))
     settings[settings_mode] = ""
+
+    if content[i] == ord("-"):
+      settings_mode = "c1b-size"
+
     i += 1
 
   elif settings_mode == "chunk-hash-size":
@@ -334,7 +335,9 @@ for item in ["sha1", "sha256", "md5"]:
 if type(settings["byte-details"]) == str:
   settings["byte-details"] = char_list_decode(settings["byte-details"])
 
-if type(settings["c1b"]) == str:
+if "c1b" in settings and type(settings["c1b"]) == str:
+  settings["c1b"] = hex(base64_decode(settings["c1b"]))[2:]
+  settings["c1b"] = settings["c1b"].zfill(len(settings["c1b"]) + (len(settings["c1b"]) % 2))
   settings["c1b"] = [int(settings["c1b"][x:x+2], 16) for x in range(0, len(settings["c1b"]), 2)]
 
 
